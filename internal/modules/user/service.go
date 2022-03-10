@@ -8,6 +8,7 @@ import (
 	"be_entry_task/internal/redis"
 	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -21,24 +22,22 @@ import (
 )
 
 type UserService struct {
-	UserRepo UserRepo
-	AuthRepo auth2.AuthRepo
-	redis    redis.RedisDB
+	redis redis.RedisDB
+	db    *sql.DB
 }
 
-func NewUserService() *UserService {
+func NewUserService(mysql *sql.DB) *UserService {
 	return &UserService{
-		UserRepo: UserRepo{},
-		AuthRepo: auth2.AuthRepo{},
-		redis:    redis.NewRedis(),
+
+		redis: redis.NewRedis(),
+		db:    mysql,
 	}
 }
 
 //RegisterUser is business logic to register user
 func (re *UserService) RegisterUser(req auth.RegisterUserRequest) error {
 	//check if username or email exists
-
-	userEx, err := re.UserRepo.SearchWithUsernameOrEmailLogin(User{
+	userEx, err := NewUserRepository(re.db).SearchWithUsernameOrEmailLogin(User{
 		Username: req.Username,
 		Email:    req.Email,
 		Password: req.Password,
@@ -52,7 +51,7 @@ func (re *UserService) RegisterUser(req auth.RegisterUserRequest) error {
 		return errors.New("user exists")
 	}
 
-	err = re.UserRepo.Create(User{
+	err = NewUserRepository(re.db).Create(User{
 		Username: req.Username,
 		Email:    req.Email,
 		Password: req.Password,
@@ -65,34 +64,10 @@ func (re *UserService) RegisterUser(req auth.RegisterUserRequest) error {
 	return nil
 }
 
-//GetProfile is business logic to get profile user
-func (re *UserService) GetProfile(usr User) (user.User, error) {
-	//check if username or email exists
-	userEx, err := re.UserRepo.SearchWithUsernameOrEmailLogin(usr)
-	if err != nil {
-		return user.User{}, err
-	}
-
-	if len(userEx) == 0 {
-		return user.User{}, err
-	}
-
-	return user.User{
-		ID:             userEx[0].ID,
-		Username:       userEx[0].Username,
-		Email:          userEx[0].Email,
-		Password:       userEx[0].Password,
-		Nickname:       userEx[0].Nickname,
-		ProfilePicture: userEx[0].ProfilePicture,
-		CreatedAt:      userEx[0].CreatedAt,
-		UpdatedAt:      userEx[0].UpdatedAt,
-	}, nil
-}
-
 func (re *UserService) Login(usr auth.LoginRequest) (auth2.UserToken, error) {
 
 	//check if username or email exists
-	userEx, err := re.UserRepo.SearchWithUsernameOrEmailLogin(User{Username: usr.Username})
+	userEx, err := NewUserRepository(re.db).SearchWithUsernameOrEmailLogin(User{Username: usr.Username})
 	if err != nil {
 		return auth2.UserToken{}, err
 	}
@@ -130,7 +105,7 @@ func (re *UserService) Login(usr auth.LoginRequest) (auth2.UserToken, error) {
 	userTokenEn.ExpiredAt = &expireTime
 	userTokenEn.CreatedAt = &dt
 
-	id, err := re.AuthRepo.Create(userTokenEn)
+	id, err := auth2.NewAuthRepo(re.db).Create(userTokenEn)
 
 	if err != nil {
 		return auth2.UserToken{}, err
@@ -141,10 +116,34 @@ func (re *UserService) Login(usr auth.LoginRequest) (auth2.UserToken, error) {
 	return userTokenEn, err
 }
 
+//GetProfile is business logic to get profile user
+func (re *UserService) GetProfile(usr User) (user.User, error) {
+	//check if username or email exists
+	userEx, err := NewUserRepository(re.db).SearchWithUsernameOrEmailLogin(usr)
+	if err != nil {
+		return user.User{}, err
+	}
+
+	if len(userEx) == 0 {
+		return user.User{}, err
+	}
+
+	return user.User{
+		ID:             userEx[0].ID,
+		Username:       userEx[0].Username,
+		Email:          userEx[0].Email,
+		Password:       userEx[0].Password,
+		Nickname:       userEx[0].Nickname,
+		ProfilePicture: userEx[0].ProfilePicture,
+		CreatedAt:      userEx[0].CreatedAt,
+		UpdatedAt:      userEx[0].UpdatedAt,
+	}, nil
+}
+
 //UpdateProfile is business logic to upload profile user
 func (re *UserService) UpdateProfile(usr user.User) (user.User, error) {
 	//check if username or email exists
-	userEx, err := re.UserRepo.Find(usr.ID)
+	userEx, err := NewUserRepository(re.db).Find(usr.ID)
 	if err != nil {
 		return user.User{}, err
 	}
@@ -153,7 +152,7 @@ func (re *UserService) UpdateProfile(usr user.User) (user.User, error) {
 		return user.User{}, err
 	}
 
-	err = re.UserRepo.Update(User{
+	err = NewUserRepository(re.db).Update(User{
 		ID:             usr.ID,
 		Nickname:       usr.Nickname,
 		ProfilePicture: usr.ProfilePicture,
@@ -169,7 +168,7 @@ func (re *UserService) UpdateProfile(usr user.User) (user.User, error) {
 //UploadPicture is business logic to upload picture user
 func (re *UserService) UploadPicture(ctx context.Context, file multipart.File, handler *multipart.FileHeader, usr user.User) (user.User, error) {
 	//check if username or email exists
-	userEx, err := re.UserRepo.Find(usr.ID)
+	userEx, err := NewUserRepository(re.db).Find(usr.ID)
 
 	if err != nil {
 		return user.User{}, err
@@ -200,7 +199,7 @@ func (re *UserService) UploadPicture(ctx context.Context, file multipart.File, h
 
 	fmt.Printf("File size uploaded: %v\n", byteSize)
 
-	err = re.UserRepo.Update(User{
+	err = NewUserRepository(re.db).Update(User{
 		ID:             usr.ID,
 		Nickname:       usr.Nickname,
 		ProfilePicture: &fileName,

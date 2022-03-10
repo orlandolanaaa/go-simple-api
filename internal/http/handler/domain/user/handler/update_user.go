@@ -4,6 +4,7 @@ import (
 	"be_entry_task/internal/http/handler/domain/user"
 	"be_entry_task/internal/http/response"
 	usrMod "be_entry_task/internal/modules/user"
+	"database/sql"
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
 	"gopkg.in/go-playground/validator.v9"
@@ -14,10 +15,11 @@ import (
 // UpdateUser for UploadPicture user
 type UpdateUser struct {
 	UserSrv usrMod.UserService
+	db      *sql.DB
 }
 
-func NewUpdateUser() *UpdateUser {
-	return &UpdateUser{}
+func NewUpdateUser(mysql *sql.DB) *UpdateUser {
+	return &UpdateUser{db: mysql}
 }
 
 func (up *UpdateUser) Handle(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -52,7 +54,7 @@ func (up *UpdateUser) Handle(w http.ResponseWriter, r *http.Request, ps httprout
 		return
 	}
 
-	res, err := usrMod.NewUserService().UpdateProfile(user.User{
+	res, err := usrMod.NewUserService(up.db).UpdateProfile(user.User{
 		ID:             userMeta.ID,
 		Username:       userMeta.Username,
 		Email:          userMeta.Email,

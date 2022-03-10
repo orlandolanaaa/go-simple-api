@@ -21,10 +21,15 @@ func main() {
 	}
 
 	// connect mysql
-	mysql.InitCon()
+	db, err := mysql.Conn()
+	defer db.Close()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	redis.Initiate()
-	srv := server.Get().WithAddr(os.Getenv("PORT")).
-		WithRouter(server.ListRoute())
+	srv := server.Get(db).WithAddr(os.Getenv("PORT")).
+		WithRouter()
 
 	if err := srv.Start(); err != nil {
 		fmt.Printf(err.Error())

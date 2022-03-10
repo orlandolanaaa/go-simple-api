@@ -7,9 +7,9 @@ import (
 	user2 "be_entry_task/internal/modules/user"
 	"be_entry_task/internal/redis"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
@@ -17,13 +17,14 @@ import (
 	"time"
 )
 
-func Auth(n httprouter.Handle) httprouter.Handle {
+func Auth(n httprouter.Handle, db *sql.DB) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.Printf("HTTP request sent to %s from %s", r.URL.Path, r.RemoteAddr)
 		authToken := strings.Split(r.Header.Get("Authorization"), "Bearer ")[1]
 
 		ctx := r.Context()
-		meta, err := ValidateToken(ctx, authToken)
+
+		meta, err := ValidateToken(ctx, authToken, db)
 		if err != nil {
 
 			response.Err(w, err)
@@ -37,24 +38,19 @@ func Auth(n httprouter.Handle) httprouter.Handle {
 	}
 }
 
-func ValidateToken(ctx context.Context, usrToken string) (user.AuthMeta, error) {
+func ValidateToken(ctx context.Context, usrToken string, db *sql.DB) (user.AuthMeta, error) {
 	re := redis.NewRedis()
-
 	//check if token
 	redisKey := "User-Auth:" + usrToken
 	var usrMeta user.AuthMeta
 	u, _ := re.GetBytes(ctx, redisKey)
 	err := json.Unmarshal(u, &usrMeta)
-	fmt.Println(usrMeta)
-	fmt.Println("PRINT META")
 
 	if usrMeta.ID != 0 {
-		fmt.Println("DISINI")
 		return usrMeta, nil
 	}
 
-	repo := auth2.AuthRepo{}
-	tokenObj, err := repo.SearchWithToken(usrToken)
+	tokenObj, err := auth2.NewAuthRepo(db).SearchWithToken(usrToken)
 	if err != nil {
 		log.Print(err)
 		return user.AuthMeta{}, err
@@ -73,8 +69,8 @@ func ValidateToken(ctx context.Context, usrToken string) (user.AuthMeta, error) 
 	if expiryTime.Before(currentTime) {
 		return user.AuthMeta{}, errors.New("The token is expired.\r\n")
 	}
-	userREpo := user2.UserRepo{}
-	usr, err := userREpo.Find(tokenObj.UserID)
+
+	usr, err := user2.NewUserRepository(db).Find(tokenObj.UserID)
 
 	if err != nil {
 		return user.AuthMeta{}, err

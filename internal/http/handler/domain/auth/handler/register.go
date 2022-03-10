@@ -4,6 +4,7 @@ import (
 	"be_entry_task/internal/http/handler/domain/auth"
 	"be_entry_task/internal/http/response"
 	"be_entry_task/internal/modules/user"
+	"database/sql"
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
 	"gopkg.in/go-playground/validator.v9"
@@ -13,10 +14,13 @@ import (
 // Register for registering user
 type Register struct {
 	UserSrv user.UserService
+	db      *sql.DB
 }
 
-func NewRegister() *Register {
-	return &Register{}
+func NewRegister(mysql *sql.DB) *Register {
+	return &Register{
+		db: mysql,
+	}
 }
 func (re *Register) Handle(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	//validate request
@@ -38,7 +42,7 @@ func (re *Register) Handle(w http.ResponseWriter, r *http.Request, ps httprouter
 		return
 	}
 
-	err = re.UserSrv.RegisterUser(req)
+	err = user.NewUserService(re.db).RegisterUser(req)
 	if err != nil {
 		response.Err(w, err)
 		return

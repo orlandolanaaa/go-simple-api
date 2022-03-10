@@ -1,7 +1,7 @@
 package user
 
 import (
-	"be_entry_task/internal/mysql"
+	"database/sql"
 	"fmt"
 	"golang.org/x/crypto/bcrypt"
 	"time"
@@ -17,26 +17,19 @@ type UserRepository interface {
 }
 
 type UserRepo struct {
+	db *sql.DB
 }
 
-func NewUserRepository() UserRepository {
-	return &UserRepo{}
+func NewUserRepository(mysql *sql.DB) UserRepository {
+	return &UserRepo{db: mysql}
 }
 
 func (u *UserRepo) Create(user User) error {
-	db, err := mysql.Conn()
-
-	if err != nil {
-		fmt.Println(err.Error())
-		return err
-	}
-
-	defer db.Close()
 
 	hashPwd, _ := bcrypt.GenerateFromPassword([]byte(user.Password), 14)
 	fmt.Println(string(hashPwd))
 
-	_, err = db.Exec("INSERT into users (username,password,email) values (?,?,?)", user.Username, string(hashPwd), user.Email)
+	_, err := u.db.Exec("INSERT into users (username,password,email) values (?,?,?)", user.Username, string(hashPwd), user.Email)
 	if err != nil {
 		fmt.Println(err.Error())
 		return err
@@ -47,17 +40,10 @@ func (u *UserRepo) Create(user User) error {
 }
 
 func (u *UserRepo) Find(id int64) (User, error) {
-	db, err := mysql.Conn()
-	if err != nil {
-		fmt.Println(err.Error())
-		return User{}, err
-	}
 
-	defer db.Close()
-	rows := db.QueryRow("SELECT * from users where id = ? ", id)
-
+	rows := u.db.QueryRow("SELECT * from users where id = ? ", id)
 	var res User
-	err = rows.Scan(&res.ID, &res.Username, &res.Password, &res.Email, &res.Nickname, &res.ProfilePicture, &res.CreatedAt, &res.UpdatedAt, &res.DeletedAt)
+	err := rows.Scan(&res.ID, &res.Username, &res.Password, &res.Email, &res.Nickname, &res.ProfilePicture, &res.CreatedAt, &res.UpdatedAt, &res.DeletedAt)
 
 	if err = rows.Err(); err != nil {
 		fmt.Println(err.Error())
@@ -68,20 +54,11 @@ func (u *UserRepo) Find(id int64) (User, error) {
 
 func (u *UserRepo) Update(user User) error {
 
-	db, err := mysql.Conn()
-
-	if err != nil {
-		fmt.Println(err.Error())
-		return err
-	}
-
-	defer db.Close()
-
 	const timeLayout = "2006-01-02 15:04:05"
 	dt := time.Now()
 	updatedAt := dt.Format(timeLayout)
 
-	_, err = db.Exec("UPDATE db_entry_task.users SET nickname = ?, profile_picture = ?, updated_at = ? WHERE id = ?", user.Nickname, user.ProfilePicture, updatedAt, user.ID)
+	_, err := u.db.Exec("UPDATE db_entry_task.users SET nickname = ?, profile_picture = ?, updated_at = ? WHERE id = ?", user.Nickname, user.ProfilePicture, updatedAt, user.ID)
 	if err != nil {
 		fmt.Println(err.Error())
 		return err
@@ -93,15 +70,7 @@ func (u *UserRepo) Update(user User) error {
 
 func (u *UserRepo) SearchWithUsernameOrEmail(user User) ([]User, error) {
 
-	db, err := mysql.Conn()
-
-	if err != nil {
-		fmt.Println(err.Error())
-		return []User{}, err
-	}
-
-	defer db.Close()
-	rows, err := db.Query("SELECT * from users where username = ? or email = ?", user.Username, user.Email)
+	rows, err := u.db.Query("SELECT * from users where username = ? or email = ?", user.Username, user.Email)
 	if err != nil {
 		fmt.Println(err.Error())
 		return []User{}, err
@@ -132,15 +101,7 @@ func (u *UserRepo) SearchWithUsernameOrEmail(user User) ([]User, error) {
 
 func (u *UserRepo) SearchWithUsernameOrEmailLogin(user User) ([]User, error) {
 
-	db, err := mysql.Conn()
-
-	if err != nil {
-		fmt.Println(err.Error())
-		return []User{}, err
-	}
-
-	defer db.Close()
-	rows, err := db.Query("SELECT * from users where username = ? or email = ?", user.Username, user.Email)
+	rows, err := u.db.Query("SELECT * from users where username = ? or email = ?", user.Username, user.Email)
 	if err != nil {
 		fmt.Println(err.Error())
 		return []User{}, err

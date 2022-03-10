@@ -4,6 +4,7 @@ import (
 	"be_entry_task/internal/http/handler/domain/user"
 	"be_entry_task/internal/http/response"
 	usrMod "be_entry_task/internal/modules/user"
+	"database/sql"
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
@@ -13,10 +14,13 @@ import (
 // UpdatePicture for UploadPicture user
 type UpdatePicture struct {
 	UserSrv usrMod.UserService
+	db      *sql.DB
 }
 
-func NewUpdatePicture() *UpdatePicture {
-	return &UpdatePicture{}
+func NewUpdatePicture(mysql *sql.DB) *UpdatePicture {
+	return &UpdatePicture{
+		db: mysql,
+	}
 }
 func (up *UpdatePicture) Handle(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	//check if username or email exists
@@ -37,7 +41,7 @@ func (up *UpdatePicture) Handle(w http.ResponseWriter, r *http.Request, ps httpr
 	}
 	defer file.Close()
 
-	res, err := up.UserSrv.UploadPicture(r.Context(), file, handler, user.User{
+	res, err := usrMod.NewUserService(up.db).UploadPicture(r.Context(), file, handler, user.User{
 		ID:             userMeta.ID,
 		Username:       userMeta.Username,
 		Email:          userMeta.Username,

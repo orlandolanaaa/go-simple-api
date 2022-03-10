@@ -5,6 +5,7 @@ go 1.15
 require (
 	cloud.google.com/go/firestore v1.6.1
 	cloud.google.com/go/storage v1.21.0
+	github.com/DATA-DOG/go-sqlmock v1.5.0 // indirect
 	github.com/containerd/containerd v1.6.1 // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200618181300-9dc6525e6118+incompatible

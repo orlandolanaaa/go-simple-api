@@ -1,9 +1,13 @@
 package server
 
 import (
+	middleware "be_entry_task/internal/http/handler"
+	"be_entry_task/internal/http/handler/domain/auth/handler"
+	user "be_entry_task/internal/http/handler/domain/user/handler"
 	"cloud.google.com/go/firestore"
 	cloud "cloud.google.com/go/storage"
 	"context"
+	"database/sql"
 	errors "errors"
 	"log"
 	"net/http"
@@ -16,11 +20,13 @@ type Server struct {
 	Ctx             context.Context
 	Storage         *cloud.Client
 	FireStoreClient *firestore.Client
+	db              *sql.DB
 }
 
-func Get() *Server {
+func Get(mysql *sql.DB) *Server {
 	return &Server{
 		srv: &http.Server{},
+		db:  mysql,
 	}
 }
 
@@ -34,7 +40,18 @@ func (s *Server) WithErrLogger(l *log.Logger) *Server {
 	return s
 }
 
-func (s *Server) WithRouter(router *httprouter.Router) *Server {
+func (s *Server) WithRouter() *Server {
+	router := httprouter.New()
+
+	//AUTH
+	router.POST("/register", handler.NewRegister(s.db).Handle)
+	router.POST("/login", handler.NewLogin(s.db).Handle)
+
+	//FEATURE
+	router.PUT("/users/profile", middleware.Auth(user.NewUpdateUser(s.db).Handle, s.db))
+	router.PUT("/users/profile-picture", middleware.Auth(user.NewUpdatePicture(s.db).Handle, s.db))
+	router.GET("/users/profile", middleware.Auth(user.NewGetProfile(s.db).Handle, s.db))
+
 	s.srv.Handler = router
 	return s
 }

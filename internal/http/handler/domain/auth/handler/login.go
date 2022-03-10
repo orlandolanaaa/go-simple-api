@@ -4,6 +4,7 @@ import (
 	"be_entry_task/internal/http/handler/domain/auth"
 	"be_entry_task/internal/http/response"
 	"be_entry_task/internal/modules/user"
+	"database/sql"
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
 	"gopkg.in/go-playground/validator.v9"
@@ -13,10 +14,13 @@ import (
 // Login for Login user
 type Login struct {
 	UserSrv user.UserService
+	db      *sql.DB
 }
 
-func NewLogin() *Login {
-	return &Login{}
+func NewLogin(mysql *sql.DB) *Login {
+	return &Login{
+		db: mysql,
+	}
 }
 
 func (l *Login) Handle(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -38,7 +42,7 @@ func (l *Login) Handle(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 		return
 	}
 
-	usr, err := l.UserSrv.Login(logReq)
+	usr, err := user.NewUserService(l.db).Login(logReq)
 	if err != nil {
 		response.Err(w, err)
 		return
