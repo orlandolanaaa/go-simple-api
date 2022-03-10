@@ -8,7 +8,6 @@ import (
 	"be_entry_task/internal/redis"
 	"context"
 	"crypto/rand"
-	"database/sql"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -84,7 +83,7 @@ func (re *UserService) GetProfile(usr User) (user.User, error) {
 		Email:          userEx[0].Email,
 		Password:       userEx[0].Password,
 		Nickname:       userEx[0].Nickname,
-		ProfilePicture: userEx[0].ProfilePicture.String,
+		ProfilePicture: userEx[0].ProfilePicture,
 		CreatedAt:      userEx[0].CreatedAt.Time.String(),
 		UpdatedAt:      userEx[0].UpdatedAt.Time.String(),
 	}, nil
@@ -158,12 +157,9 @@ func (re *UserService) UpdateProfile(usr user.User) (user.User, error) {
 	}
 
 	err = re.UserRepo.Update(User{
-		ID:       usr.ID,
-		Nickname: usr.Nickname,
-		ProfilePicture: sql.NullString{
-			String: usr.ProfilePicture,
-			Valid:  true,
-		},
+		ID:             usr.ID,
+		Nickname:       usr.Nickname,
+		ProfilePicture: usr.ProfilePicture,
 	})
 
 	if err != nil {
@@ -187,6 +183,7 @@ func (re *UserService) UploadPicture(ctx context.Context, file multipart.File, h
 	}
 
 	//setup & upload image
+
 	fileName := strings.Join(strings.Fields(handler.Filename+strconv.FormatInt(usr.ID, 10)), "")
 
 	bucketName := os.Getenv("BUCKET_NAME") //ToDo: Replace with your bucket url
@@ -207,12 +204,9 @@ func (re *UserService) UploadPicture(ctx context.Context, file multipart.File, h
 	fmt.Printf("File size uploaded: %v\n", byteSize)
 
 	err = re.UserRepo.Update(User{
-		ID:       usr.ID,
-		Nickname: usr.Nickname,
-		ProfilePicture: sql.NullString{
-			String: fileName,
-			Valid:  true,
-		},
+		ID:             usr.ID,
+		Nickname:       usr.Nickname,
+		ProfilePicture: &fileName,
 	})
 
 	if err != nil {
@@ -224,7 +218,7 @@ func (re *UserService) UploadPicture(ctx context.Context, file multipart.File, h
 		Username:       userEx.Username,
 		Email:          userEx.Email,
 		Nickname:       userEx.Nickname,
-		ProfilePicture: userEx.ProfilePicture.String,
+		ProfilePicture: userEx.ProfilePicture,
 		CreatedAt:      userEx.CreatedAt.Time.String(),
 		UpdatedAt:      userEx.UpdatedAt.Time.String(),
 	}, nil

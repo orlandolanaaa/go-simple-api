@@ -84,7 +84,7 @@ func ValidateToken(ctx context.Context, usrToken string) (user.AuthMeta, error) 
 		Username:       usr.Username,
 		Email:          usr.Email,
 		Nickname:       usr.Nickname,
-		ProfilePicture: usr.ProfilePicture.String,
+		ProfilePicture: usr.ProfilePicture,
 		CreatedAt:      usr.CreatedAt.Time.String(),
 		UpdatedAt:      usr.UpdatedAt.Time.String(),
 	}

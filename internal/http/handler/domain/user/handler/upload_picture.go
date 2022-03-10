@@ -45,10 +45,13 @@ func (up *UpdatePicture) Handle(w http.ResponseWriter, r *http.Request, ps httpr
 		ProfilePicture: userMeta.ProfilePicture,
 	})
 
-	if res.ProfilePicture == "" {
-		res.ProfilePicture = os.Getenv("NO_IMG_URL")
+	var picUrl string
+	if *res.ProfilePicture == "" {
+		picUrl = os.Getenv("NO_IMG_URL")
+		res.ProfilePicture = &picUrl
 	} else {
-		res.ProfilePicture = os.Getenv("STORAGE_URL") + res.ProfilePicture + os.Getenv("STORAGE_MEDIA")
+		picUrl = os.Getenv("STORAGE_URL") + *res.ProfilePicture + os.Getenv("STORAGE_MEDIA")
+		res.ProfilePicture = &picUrl
 	}
 
 	if err != nil {

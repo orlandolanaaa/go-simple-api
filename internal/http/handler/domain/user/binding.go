@@ -7,7 +7,7 @@ type (
 		Email          string  `json:"email"  db:"email"`
 		Password       string  `json:"password" db:"password"`
 		Nickname       *string `json:"nickname" db:"nickname"`
-		ProfilePicture string  `json:"profile_picture" db:"profile_picture"`
+		ProfilePicture *string `json:"profile_picture" db:"profile_picture"`
 		CreatedAt      string  `json:"created_at" db:"created_at"`
 		UpdatedAt      string  `json:"updated_at" db:"updated_at"`
 	}
@@ -18,7 +18,7 @@ type (
 		Email          string  `json:"email"  db:"email"`
 		Password       string  `json:"password" db:"password"`
 		Nickname       *string `json:"nickname" db:"nickname"`
-		ProfilePicture string  `json:"profile_picture" db:"profile_picture"`
+		ProfilePicture *string `json:"profile_picture" db:"profile_picture"`
 		CreatedAt      string  `json:"created_at" db:"created_at"`
 		UpdatedAt      string  `json:"updated_at" db:"updated_at"`
 	}
@@ -28,6 +28,6 @@ type (
 		Username       string  `json:"username" `
 		Email          string  `json:"email"  `
 		Nickname       *string `json:"nickname" `
-		ProfilePicture string  `json:"profile_picture" `
+		ProfilePicture *string `json:"profile_picture" `
 	}
 )
