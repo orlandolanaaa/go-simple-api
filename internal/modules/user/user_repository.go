@@ -7,13 +7,6 @@ import (
 	"time"
 )
 
-//
-//type UpdateUserReq struct {
-//	ID             int64  `json:"id"  db:"id"`
-//	Nickname       string `json:"nickname" db:"nickname"`
-//	ProfilePicture string `json:"profile_picture" db:"profile_picture"`
-//}
-
 // UserRepository defines the datastore handling persisting User records.
 type UserRepository interface {
 	Create(User) error
@@ -26,9 +19,9 @@ type UserRepository interface {
 type UserRepo struct {
 }
 
-//func NewUserRepository() UserRepository {
-//	return &User{}
-//}
+func NewUserRepository() UserRepository {
+	return &UserRepo{}
+}
 
 func (u *UserRepo) Create(user User) error {
 	db, err := mysql.Conn()

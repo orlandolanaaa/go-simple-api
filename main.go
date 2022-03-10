@@ -3,6 +3,7 @@ package main
 import (
 	"be_entry_task/cmd/server"
 	"be_entry_task/internal/mysql"
+	"be_entry_task/internal/redis"
 	_ "flag"
 	"fmt"
 	_ "github.com/docker/docker/daemon/logger"
@@ -21,10 +22,12 @@ func main() {
 
 	// connect mysql
 	mysql.InitCon()
+	redis.Initiate()
 	srv := server.Get().WithAddr(os.Getenv("PORT")).
 		WithRouter(server.ListRoute())
 
 	if err := srv.Start(); err != nil {
 		fmt.Printf(err.Error())
 	}
+
 }

@@ -5,7 +5,6 @@ import (
 	"be_entry_task/internal/http/response"
 	usrMod "be_entry_task/internal/modules/user"
 	"encoding/json"
-	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"gopkg.in/go-playground/validator.v9"
 	"net/http"
@@ -53,13 +52,7 @@ func (up *UpdateUser) Handle(w http.ResponseWriter, r *http.Request, ps httprout
 		return
 	}
 
-	if userMeta.ProfilePicture == "" {
-		userMeta.ProfilePicture = os.Getenv("NO_IMG_URL")
-	} else {
-		userMeta.ProfilePicture = fmt.Sprintf("https://storage.cloud.google.com/%s/%s", os.Getenv("BUCKET_NAME"), userMeta.ProfilePicture)
-	}
-
-	res, err := up.UserSrv.UploadProfile(user.User{
+	res, err := usrMod.NewUserService().UpdateProfile(user.User{
 		ID:             userMeta.ID,
 		Username:       userMeta.Username,
 		Email:          userMeta.Email,
@@ -73,19 +66,20 @@ func (up *UpdateUser) Handle(w http.ResponseWriter, r *http.Request, ps httprout
 		response.Err(w, err)
 		return
 	}
-	fmt.Println(res.ProfilePicture)
-	
+
 	if res.ProfilePicture == "" {
 		res.ProfilePicture = os.Getenv("NO_IMG_URL")
 	} else {
-		fmt.Sprintf("https://storage.cloud.google.com/%s/%s", os.Getenv("BUCKET_NAME"), res.ProfilePicture)
+		res.ProfilePicture = os.Getenv("STORAGE_URL") + res.ProfilePicture + os.Getenv("STORAGE_MEDIA")
+
 	}
 
 	result := user.Profile{
+		ID:             userMeta.ID,
 		Username:       res.Username,
 		Email:          res.Email,
 		Nickname:       res.Nickname,
-		ProfilePicture: fmt.Sprintf("https://storage.cloud.google.com/%s/%s", os.Getenv("BUCKET_NAME"), res.ProfilePicture),
+		ProfilePicture: res.ProfilePicture,
 	}
 
 	response.Json(w, http.StatusOK, "Success", result)

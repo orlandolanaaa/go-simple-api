@@ -7,7 +7,7 @@ type User struct {
 	Username       string         `json:"username"  db:"username"`
 	Email          string         `json:"email"  db:"email"`
 	Password       string         `json:"password" db:"password"`
-	Nickname       sql.NullString `json:"nickname" db:"nickname"`
+	Nickname       *string        `json:"nickname" db:"nickname"`
 	ProfilePicture sql.NullString `json:"profile_picture" db:"profile_picture"`
 	CreatedAt      sql.NullTime   `json:"created_at" db:"created_at"`
 	UpdatedAt      sql.NullTime   `json:"updated_at" db:"updated_at"`

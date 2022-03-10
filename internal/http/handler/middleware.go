@@ -1,11 +1,15 @@
 package handler
 
 import (
+	"be_entry_task/internal/http/handler/domain/user"
 	"be_entry_task/internal/http/response"
 	auth2 "be_entry_task/internal/modules/auth"
 	user2 "be_entry_task/internal/modules/user"
+	"be_entry_task/internal/redis"
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
@@ -18,14 +22,14 @@ func Auth(n httprouter.Handle) httprouter.Handle {
 		log.Printf("HTTP request sent to %s from %s", r.URL.Path, r.RemoteAddr)
 		authToken := strings.Split(r.Header.Get("Authorization"), "Bearer ")[1]
 
-		meta, err := ValidateToken(authToken)
+		ctx := r.Context()
+		meta, err := ValidateToken(ctx, authToken)
 		if err != nil {
 
 			response.Err(w, err)
 			return
 		}
 
-		ctx := r.Context()
 		ctx = context.WithValue(ctx, "meta", meta)
 		r = r.WithContext(ctx)
 
@@ -33,18 +37,31 @@ func Auth(n httprouter.Handle) httprouter.Handle {
 	}
 }
 
-func ValidateToken(usrToken string) (map[string]interface{}, error) {
+func ValidateToken(ctx context.Context, usrToken string) (user.AuthMeta, error) {
+	re := redis.NewRedis()
 
-	//check if username or email exists
+	//check if token
+	redisKey := "User-Auth:" + usrToken
+	var usrMeta user.AuthMeta
+	u, _ := re.GetBytes(ctx, redisKey)
+	err := json.Unmarshal(u, &usrMeta)
+	fmt.Println(usrMeta)
+	fmt.Println("PRINT META")
+
+	if usrMeta.ID != 0 {
+		fmt.Println("DISINI")
+		return usrMeta, nil
+	}
+
 	repo := auth2.AuthRepo{}
 	tokenObj, err := repo.SearchWithToken(usrToken)
 	if err != nil {
 		log.Print(err)
-		return nil, err
+		return user.AuthMeta{}, err
 	}
 
 	if tokenObj.ID == 0 {
-		return nil, errors.New("user not authorize")
+		return user.AuthMeta{}, errors.New("user not authorize")
 	}
 
 	const timeLayout = "2006-01-02 15:04:05"
@@ -53,25 +70,34 @@ func ValidateToken(usrToken string) (map[string]interface{}, error) {
 	currentTime, _ := time.Parse(timeLayout, time.Now().Format(timeLayout))
 
 	if expiryTime.Before(currentTime) {
-		return nil, errors.New("The token is expired.\r\n")
+		return user.AuthMeta{}, errors.New("The token is expired.\r\n")
 	}
 	userREpo := user2.UserRepo{}
 	usr, err := userREpo.Find(tokenObj.UserID)
 
 	if err != nil {
-		return nil, err
+		return user.AuthMeta{}, err
 	}
 
-	tokenDetails := map[string]interface{}{
-		"id":              usr.ID,
-		"username":        usr.Username,
-		"email":           usr.Email,
-		"nickname":        usr.Nickname.String,
-		"profile_picture": usr.ProfilePicture.String,
-		"token":           tokenObj.Token,
-		"expires_at":      tokenObj.ExpiredAt,
+	tokenDetails := user.AuthMeta{
+		ID:             usr.ID,
+		Username:       usr.Username,
+		Email:          usr.Email,
+		Nickname:       usr.Nickname,
+		ProfilePicture: usr.ProfilePicture.String,
+		CreatedAt:      usr.CreatedAt.Time.String(),
+		UpdatedAt:      usr.UpdatedAt.Time.String(),
 	}
 
+	b, err := json.Marshal(&tokenDetails)
+	if err != nil {
+		return user.AuthMeta{}, err
+	}
+
+	err = re.Set(ctx, redisKey, b, 5*time.Minute)
+	if err != nil {
+		return user.AuthMeta{}, err
+	}
 	return tokenDetails, nil
 
 }

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
+	"os"
 )
 
 // UpdatePicture for UploadPicture user
@@ -43,10 +44,25 @@ func (up *UpdatePicture) Handle(w http.ResponseWriter, r *http.Request, ps httpr
 		Nickname:       userMeta.Nickname,
 		ProfilePicture: userMeta.ProfilePicture,
 	})
+
+	if res.ProfilePicture == "" {
+		res.ProfilePicture = os.Getenv("NO_IMG_URL")
+	} else {
+		res.ProfilePicture = os.Getenv("STORAGE_URL") + res.ProfilePicture + os.Getenv("STORAGE_MEDIA")
+	}
+
 	if err != nil {
 		response.Err(w, err)
 		return
 	}
 
-	response.Json(w, http.StatusOK, "Success", res)
+	profile := user.Profile{
+		ID:             res.ID,
+		Username:       res.Username,
+		Email:          res.Email,
+		Nickname:       res.Nickname,
+		ProfilePicture: res.ProfilePicture,
+	}
+
+	response.Json(w, http.StatusOK, "Success", profile)
 }

@@ -5,6 +5,7 @@ import (
 	"be_entry_task/internal/http/handler/domain/auth"
 	"be_entry_task/internal/http/handler/domain/user"
 	auth2 "be_entry_task/internal/modules/auth"
+	"be_entry_task/internal/redis"
 	"context"
 	"crypto/rand"
 	"database/sql"
@@ -23,14 +24,16 @@ import (
 type UserService struct {
 	UserRepo UserRepo
 	AuthRepo auth2.AuthRepo
+	redis    redis.RedisDB
 }
 
-//func NewUserService(userRepository repository.User) *UserService {
-//	return &UserService{
-//		UserRepo: userRepository,
-//	}
-//}
-//
+func NewUserService() *UserService {
+	return &UserService{
+		UserRepo: UserRepo{},
+		AuthRepo: auth2.AuthRepo{},
+		redis:    redis.NewRedis(),
+	}
+}
 
 //RegisterUser is business logic to register user
 func (re *UserService) RegisterUser(req auth.RegisterUserRequest) error {
@@ -80,7 +83,7 @@ func (re *UserService) GetProfile(usr User) (user.User, error) {
 		Username:       userEx[0].Username,
 		Email:          userEx[0].Email,
 		Password:       userEx[0].Password,
-		Nickname:       userEx[0].Nickname.String,
+		Nickname:       userEx[0].Nickname,
 		ProfilePicture: userEx[0].ProfilePicture.String,
 		CreatedAt:      userEx[0].CreatedAt.Time.String(),
 		UpdatedAt:      userEx[0].UpdatedAt.Time.String(),
@@ -142,8 +145,8 @@ func (re *UserService) Login(usr auth.LoginRequest) (auth2.UserToken, error) {
 	return userTokenEn, err
 }
 
-//UploadProfile is business logic to upload profile user
-func (re *UserService) UploadProfile(usr user.User) (user.User, error) {
+//UpdateProfile is business logic to upload profile user
+func (re *UserService) UpdateProfile(usr user.User) (user.User, error) {
 	//check if username or email exists
 	userEx, err := re.UserRepo.Find(usr.ID)
 	if err != nil {
@@ -155,11 +158,8 @@ func (re *UserService) UploadProfile(usr user.User) (user.User, error) {
 	}
 
 	err = re.UserRepo.Update(User{
-		ID: usr.ID,
-		Nickname: sql.NullString{
-			String: usr.Nickname,
-			Valid:  true,
-		},
+		ID:       usr.ID,
+		Nickname: usr.Nickname,
 		ProfilePicture: sql.NullString{
 			String: usr.ProfilePicture,
 			Valid:  true,
@@ -207,23 +207,25 @@ func (re *UserService) UploadPicture(ctx context.Context, file multipart.File, h
 	fmt.Printf("File size uploaded: %v\n", byteSize)
 
 	err = re.UserRepo.Update(User{
-		ID: usr.ID,
-		Nickname: sql.NullString{
-			String: usr.Nickname,
-			Valid:  true,
-		},
+		ID:       usr.ID,
+		Nickname: usr.Nickname,
 		ProfilePicture: sql.NullString{
 			String: fileName,
 			Valid:  true,
 		},
 	})
 
-	uploadedImageUrl := fmt.Sprintf("https://storage.cloud.google.com/%s/%s", bucketName, fileName)
-	usr.ProfilePicture = uploadedImageUrl
-
 	if err != nil {
 		return user.User{}, err
 	}
 
-	return usr, nil
+	return user.User{
+		ID:             userEx.ID,
+		Username:       userEx.Username,
+		Email:          userEx.Email,
+		Nickname:       userEx.Nickname,
+		ProfilePicture: userEx.ProfilePicture.String,
+		CreatedAt:      userEx.CreatedAt.Time.String(),
+		UpdatedAt:      userEx.UpdatedAt.Time.String(),
+	}, nil
 }
