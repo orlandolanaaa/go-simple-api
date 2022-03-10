@@ -66,8 +66,9 @@ func ValidateToken(ctx context.Context, usrToken string) (user.AuthMeta, error) 
 
 	const timeLayout = "2006-01-02 15:04:05"
 	layout := "2006-01-02T15:04:05Z"
-	expiryTime, _ := time.Parse(layout, tokenObj.ExpiredAt)
-	currentTime, _ := time.Parse(timeLayout, time.Now().Format(timeLayout))
+
+	expiryTime, _ := time.Parse(layout, tokenObj.ExpiredAt.String())
+	currentTime, _ := time.Parse(layout, time.Now().Format(timeLayout))
 
 	if expiryTime.Before(currentTime) {
 		return user.AuthMeta{}, errors.New("The token is expired.\r\n")
@@ -85,8 +86,8 @@ func ValidateToken(ctx context.Context, usrToken string) (user.AuthMeta, error) 
 		Email:          usr.Email,
 		Nickname:       usr.Nickname,
 		ProfilePicture: usr.ProfilePicture,
-		CreatedAt:      usr.CreatedAt.Time.String(),
-		UpdatedAt:      usr.UpdatedAt.Time.String(),
+		CreatedAt:      usr.CreatedAt,
+		UpdatedAt:      usr.UpdatedAt,
 	}
 
 	b, err := json.Marshal(&tokenDetails)

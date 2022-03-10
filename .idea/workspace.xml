@@ -8,10 +8,8 @@
       <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/internal/http/handler/domain/user/binding.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/http/handler/domain/user/binding.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/http/handler/domain/user/handler/get_profile.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/http/handler/domain/user/handler/get_profile.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/http/handler/domain/user/handler/update_user.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/http/handler/domain/user/handler/update_user.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/http/handler/domain/user/handler/upload_picture.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/http/handler/domain/user/handler/upload_picture.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/internal/http/handler/middleware.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/http/handler/middleware.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/modules/auth/entities.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/modules/auth/entities.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/internal/modules/user/entities.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/modules/user/entities.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/internal/modules/user/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/modules/user/service.go" afterDir="false" />
     </list>

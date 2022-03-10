@@ -84,8 +84,8 @@ func (re *UserService) GetProfile(usr User) (user.User, error) {
 		Password:       userEx[0].Password,
 		Nickname:       userEx[0].Nickname,
 		ProfilePicture: userEx[0].ProfilePicture,
-		CreatedAt:      userEx[0].CreatedAt.Time.String(),
-		UpdatedAt:      userEx[0].UpdatedAt.Time.String(),
+		CreatedAt:      userEx[0].CreatedAt,
+		UpdatedAt:      userEx[0].UpdatedAt,
 	}, nil
 }
 
@@ -122,16 +122,13 @@ func (re *UserService) Login(usr auth.LoginRequest) (auth2.UserToken, error) {
 	dt := time.Now()
 	//generatedAt := dt.Format(timeLayout)
 	expireTime := time.Now().Add(time.Minute * 60)
-	expiresAt := expireTime.Format(timeLayout)
+	//expiresAt := expireTime.Format(timeLayout)
 
 	var userTokenEn auth2.UserToken
 	userTokenEn.Token = authToken
 	userTokenEn.UserID = userEx[0].ID
-	userTokenEn.ExpiredAt = expiresAt
-	userTokenEn.CreatedAt = struct {
-		Time  time.Time
-		Valid bool
-	}{Time: dt, Valid: true}
+	userTokenEn.ExpiredAt = &expireTime
+	userTokenEn.CreatedAt = &dt
 
 	id, err := re.AuthRepo.Create(userTokenEn)
 
@@ -218,8 +215,8 @@ func (re *UserService) UploadPicture(ctx context.Context, file multipart.File, h
 		Username:       userEx.Username,
 		Email:          userEx.Email,
 		Nickname:       userEx.Nickname,
-		ProfilePicture: userEx.ProfilePicture,
-		CreatedAt:      userEx.CreatedAt.Time.String(),
-		UpdatedAt:      userEx.UpdatedAt.Time.String(),
+		ProfilePicture: &fileName,
+		CreatedAt:      userEx.CreatedAt,
+		UpdatedAt:      userEx.UpdatedAt,
 	}, nil
 }
