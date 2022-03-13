@@ -5,16 +5,10 @@ variables:
   APP_TEAM: games
   APP_REPO_PATH: git.garena.com/constantino.lana/go-simple-user-api
 
-before_script:
-  - mkdir -p /go/src/git.garena.com
-  - ln -s /builds/user /go/src/git.garena.com/constantino.lana
 
 test:
   stage: test
   tags:
     - tutorial-ci
   script:
-    - apk add --no-cache git build-base
-    - cd /go/src/git.garena.com/constantino.lana/go-simple-user-api
-    - go get ./...
     - go test $(go list ./... | grep -v /vendor/) -v -coverprofile .testCoverage.txt
