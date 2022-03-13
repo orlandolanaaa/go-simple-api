@@ -43,9 +43,6 @@ func TestFirebase_NewService(t *testing.T) {
 				t.Errorf("NewService() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			//if !reflect.DeepEqual(got, tt.want) {
-			//	t.Errorf("NewService() got = %v, want %v", got, tt.want)
-			//}
 		})
 	}
 }

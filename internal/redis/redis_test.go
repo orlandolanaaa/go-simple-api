@@ -2,9 +2,7 @@ package redis
 
 import (
 	"context"
-	"github.com/elliotchance/redismock"
 	"github.com/go-redis/redis"
-	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
 	"time"
@@ -57,15 +55,15 @@ func TestRedisDB_Del(t *testing.T) {
 	}
 }
 
-func TestRedisDB_Get(t *testing.T) {
-	mock := redismock.NewNiceMock(client)
-	mock.On("Get", key).Return(redis.NewStringResult(val, nil))
-
-	r := NewRedis(mock)
-	res, err := r.Get(context.Background(), key)
-	assert.NoError(t, err)
-	assert.Equal(t, val, res)
-}
+//func TestRedisDB_Get(t *testing.T) {
+//	mock := redismock.NewNiceMock(client)
+//	mock.On("Get", key).Return(redis.NewStringResult(val, nil))
+//
+//	r := NewRedis(mock)
+//	res, err := r.Get(context.Background(), key)
+//	assert.NoError(t, err)
+//	assert.Equal(t, val, res)
+//}
 
 func TestRedisDB_GetBytes(t *testing.T) {
 	type args struct {
