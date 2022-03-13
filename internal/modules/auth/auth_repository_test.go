@@ -10,64 +10,63 @@ import (
 	"time"
 )
 
-//
-//func TestAuthRepo_Create(t *testing.T) {
-//	type args struct {
-//		user UserToken
-//	}
-//
-//	randomToken := make([]byte, 32)
-//
-//	_, _ = rand.Read(randomToken)
-//	authToken := base64.URLEncoding.EncodeToString(randomToken)
-//	const timeLayout = "2006-01-02 15:04:05"
-//
-//	dt := time.Now()
-//	//generatedAt := dt.Format(timeLayout)
-//	expireTime := time.Now().Add(time.Minute * 60)
-//
-//	db, mock, err := sqlmock.New()
-//	if err != nil {
-//		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-//	}
-//	defer db.Close()
-//
-//	query := regexp.QuoteMeta("insert into user_tokens (user_id,token,expired_at) values (?,?,?)")
-//
-//	//rows := sqlmock.NewRows(nil)
-//
-//	mock.ExpectQuery(query).WithArgs(1, authToken, &expireTime)
-//
-//	tests := []struct {
-//		name    string
-//		args    args
-//		want    int64
-//		wantErr bool
-//	}{
-//		{name: "Success", args: args{user: UserToken{
-//			UserID:    1,
-//			Token:     authToken,
-//			ExpiredAt: &expireTime,
-//			CreatedAt: &dt,
-//			UpdatedAt: nil,
-//			DeletedAt: nil,
-//		}}, want: 0, wantErr: false},
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			ar := &AuthRepo{db: db}
-//			got, _ := ar.Create(tt.args.user)
-//
-//			if (err != nil) != tt.wantErr {
-//				t.Errorf("Create() error = %v, wantErr %v", err, tt.wantErr)
-//				return
-//			}
-//			if got != tt.want {
-//				t.Errorf("Create() got = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
+func TestAuthRepo_Create(t *testing.T) {
+	type args struct {
+		user UserToken
+	}
+
+	randomToken := make([]byte, 32)
+
+	_, _ = rand.Read(randomToken)
+	authToken := base64.URLEncoding.EncodeToString(randomToken)
+	const timeLayout = "2006-01-02 15:04:05"
+
+	dt := time.Now()
+	//generatedAt := dt.Format(timeLayout)
+	expireTime := time.Now().Add(time.Minute * 60)
+
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	query := regexp.QuoteMeta("insert into user_tokens (user_id,token,expired_at) values (?,?,?)")
+
+	//rows := sqlmock.NewRows(nil)
+
+	mock.ExpectQuery(query).WithArgs(1, authToken, &expireTime)
+
+	tests := []struct {
+		name    string
+		args    args
+		want    int64
+		wantErr bool
+	}{
+		{name: "Success", args: args{user: UserToken{
+			UserID:    1,
+			Token:     authToken,
+			ExpiredAt: &expireTime,
+			CreatedAt: &dt,
+			UpdatedAt: nil,
+			DeletedAt: nil,
+		}}, want: 0, wantErr: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ar := &AuthRepo{db: db}
+			got, _ := ar.Create(tt.args.user)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Create() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("Create() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 
 func TestAuthRepo_SearchWithToken(t *testing.T) {
 	type fields struct {

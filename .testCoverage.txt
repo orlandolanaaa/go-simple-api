@@ -1,9 +1,9 @@
 mode: set
 be_entry_task/internal/modules/auth/auth_repository.go:12.43,16.2 1 0
-be_entry_task/internal/modules/auth/auth_repository.go:23.59,26.16 2 0
+be_entry_task/internal/modules/auth/auth_repository.go:23.59,26.16 2 1
 be_entry_task/internal/modules/auth/auth_repository.go:31.2,32.16 2 0
 be_entry_task/internal/modules/auth/auth_repository.go:37.2,38.16 2 0
-be_entry_task/internal/modules/auth/auth_repository.go:26.16,29.3 2 0
+be_entry_task/internal/modules/auth/auth_repository.go:26.16,29.3 2 1
 be_entry_task/internal/modules/auth/auth_repository.go:32.16,35.3 2 0
 be_entry_task/internal/modules/auth/auth_repository.go:41.70,49.34 4 1
 be_entry_task/internal/modules/auth/auth_repository.go:54.2,54.20 1 1
