@@ -3,7 +3,6 @@ package mysql
 import (
 	"database/sql"
 	"os"
-	"reflect"
 	"testing"
 )
 
@@ -27,15 +26,11 @@ func TestConn(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Conn()
+			_, err := Conn()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Conn() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Conn() got = %v, want %v", got, tt.want)
-			}
 		})
 	}
 }
-
