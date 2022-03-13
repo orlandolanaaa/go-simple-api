@@ -13,7 +13,7 @@ type RespError struct {
 }
 
 func (r *RespError) Error() string {
-	return fmt.Sprintf("%d: %d", r.Code, r.Message)
+	return fmt.Sprintf("%d: %s", r.Code, r.Message)
 }
 
 func InternalServerError(msg string) error {
