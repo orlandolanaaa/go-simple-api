@@ -13,7 +13,6 @@ type UserRepository interface {
 	Find(int64) (User, error)
 	SearchWithUsernameOrEmail(User) ([]User, error)
 	Update(User) error
-	SearchWithUsernameOrEmailLogin(User) ([]User, error)
 }
 
 type UserRepo struct {
@@ -69,37 +68,6 @@ func (u *UserRepo) Update(user User) error {
 }
 
 func (u *UserRepo) SearchWithUsernameOrEmail(user User) ([]User, error) {
-
-	rows, err := u.db.Query("SELECT * from users where username = ? or email = ?", user.Username, user.Email)
-	if err != nil {
-		fmt.Println(err.Error())
-		return []User{}, err
-	}
-
-	defer rows.Close()
-
-	var result []User
-
-	for rows.Next() {
-		var each = User{}
-		var err = rows.Scan(&each.ID, &each.Username, &each.Password, &each.Email, &each.Nickname, &each.ProfilePicture, &each.CreatedAt, &each.UpdatedAt, &each.DeletedAt)
-
-		if err != nil {
-			fmt.Println(err.Error())
-			return []User{}, err
-		}
-
-		result = append(result, each)
-	}
-
-	if err = rows.Err(); err != nil {
-		fmt.Println(err.Error())
-		return []User{}, err
-	}
-	return result, nil
-}
-
-func (u *UserRepo) SearchWithUsernameOrEmailLogin(user User) ([]User, error) {
 
 	rows, err := u.db.Query("SELECT * from users where username = ? or email = ?", user.Username, user.Email)
 	if err != nil {

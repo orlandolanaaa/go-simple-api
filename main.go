@@ -27,7 +27,7 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	redis.Initiate()
+	redis.Initiate(os.Getenv("REDIS_DB_HOST") + ":" + os.Getenv("REDIS_DB_PORT"))
 	srv := server.Get(db).WithAddr(os.Getenv("PORT")).
 		WithRouter()
 

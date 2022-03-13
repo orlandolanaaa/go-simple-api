@@ -17,16 +17,15 @@ import (
 	"time"
 )
 
-func Auth(n httprouter.Handle, db *sql.DB) httprouter.Handle {
+func Auth(n httprouter.Handle, db *sql.DB, re redis.RedisDB) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.Printf("HTTP request sent to %s from %s", r.URL.Path, r.RemoteAddr)
 		authToken := strings.Split(r.Header.Get("Authorization"), "Bearer ")[1]
 
 		ctx := r.Context()
 
-		meta, err := ValidateToken(ctx, authToken, db)
+		meta, err := ValidateToken(ctx, authToken, db, re)
 		if err != nil {
-
 			response.Err(w, err)
 			return
 		}
@@ -38,11 +37,11 @@ func Auth(n httprouter.Handle, db *sql.DB) httprouter.Handle {
 	}
 }
 
-func ValidateToken(ctx context.Context, usrToken string, db *sql.DB) (user.AuthMeta, error) {
-	re := redis.NewRedis()
+func ValidateToken(ctx context.Context, usrToken string, db *sql.DB, re redis.RedisDB) (user.AuthMeta, error) {
 	//check if token
 	redisKey := "User-Auth:" + usrToken
 	var usrMeta user.AuthMeta
+
 	u, _ := re.GetBytes(ctx, redisKey)
 	err := json.Unmarshal(u, &usrMeta)
 

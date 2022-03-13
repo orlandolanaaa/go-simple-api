@@ -12,10 +12,6 @@ func NewRedis() RedisDB {
 	return RedisDB{}
 }
 
-func (r *RedisDB) Get(ctx context.Context, key string) (string, error) {
-	return Client.Get(ctx, key).Result()
-}
-
 func (r *RedisDB) GetBytes(ctx context.Context, key string) ([]byte, error) {
 	return Client.Get(ctx, key).Bytes()
 }

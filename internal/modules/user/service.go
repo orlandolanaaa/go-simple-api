@@ -28,7 +28,6 @@ type UserService struct {
 
 func NewUserService(mysql *sql.DB) *UserService {
 	return &UserService{
-
 		redis: redis.NewRedis(),
 		db:    mysql,
 	}
@@ -37,7 +36,7 @@ func NewUserService(mysql *sql.DB) *UserService {
 //RegisterUser is business logic to register user
 func (re *UserService) RegisterUser(req auth.RegisterUserRequest) error {
 	//check if username or email exists
-	userEx, err := NewUserRepository(re.db).SearchWithUsernameOrEmailLogin(User{
+	userEx, err := NewUserRepository(re.db).SearchWithUsernameOrEmail(User{
 		Username: req.Username,
 		Email:    req.Email,
 		Password: req.Password,
@@ -67,7 +66,7 @@ func (re *UserService) RegisterUser(req auth.RegisterUserRequest) error {
 func (re *UserService) Login(usr auth.LoginRequest) (auth2.UserToken, error) {
 
 	//check if username or email exists
-	userEx, err := NewUserRepository(re.db).SearchWithUsernameOrEmailLogin(User{Username: usr.Username})
+	userEx, err := NewUserRepository(re.db).SearchWithUsernameOrEmail(User{Username: usr.Username})
 	if err != nil {
 		return auth2.UserToken{}, err
 	}
@@ -119,7 +118,7 @@ func (re *UserService) Login(usr auth.LoginRequest) (auth2.UserToken, error) {
 //GetProfile is business logic to get profile user
 func (re *UserService) GetProfile(usr User) (user.User, error) {
 	//check if username or email exists
-	userEx, err := NewUserRepository(re.db).SearchWithUsernameOrEmailLogin(usr)
+	userEx, err := NewUserRepository(re.db).SearchWithUsernameOrEmail(usr)
 	if err != nil {
 		return user.User{}, err
 	}

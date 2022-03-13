@@ -4,6 +4,7 @@ import (
 	"be_entry_task/internal/http/handler/domain/user"
 	"be_entry_task/internal/http/response"
 	usrMod "be_entry_task/internal/modules/user"
+	"be_entry_task/internal/redis"
 	"database/sql"
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
@@ -16,6 +17,7 @@ import (
 type UpdateUser struct {
 	UserSrv usrMod.UserService
 	db      *sql.DB
+	redis   redis.RedisDB
 }
 
 func NewUpdateUser(mysql *sql.DB) *UpdateUser {
