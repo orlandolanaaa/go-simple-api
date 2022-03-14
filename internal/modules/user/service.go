@@ -11,6 +11,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"golang.org/x/crypto/bcrypt"
@@ -123,12 +124,33 @@ func (re *UserService) Login(usr auth.LoginRequest) (entities.UserToken, error) 
 //GetProfile is business logic to get profile user
 func (re *UserService) GetProfile(usr entities.User) (user.User, error) {
 	//check if username or email exists
+
+	ctx := context.Background()
+	redisKey := "User-Prof:" + usr.Username
+	var usrRed user.User
+	u, _ := re.redis.GetBytes(ctx, redisKey)
+	err := json.Unmarshal(u, &usrRed)
+
+	if usrRed.ID != 0 {
+		return usrRed, nil
+	}
+
 	userEx, err := re.uRepo.SearchWithUsernameOrEmail(usr)
 	if err != nil {
 		return user.User{}, err
 	}
 
 	if len(userEx) == 0 {
+		return user.User{}, err
+	}
+
+	b, err := json.Marshal(&userEx[0])
+	if err != nil {
+		return user.User{}, err
+	}
+
+	err = re.redis.Set(ctx, redisKey, b, 5*time.Minute)
+	if err != nil {
 		return user.User{}, err
 	}
 
@@ -146,6 +168,7 @@ func (re *UserService) GetProfile(usr entities.User) (user.User, error) {
 
 //UpdateProfile is business logic to upload profile user
 func (re *UserService) UpdateProfile(usr user.User) (user.User, error) {
+	ctx := context.Background()
 	//check if username or email exists
 	userEx, err := re.uRepo.Find(usr.ID)
 	if err != nil {
@@ -166,6 +189,11 @@ func (re *UserService) UpdateProfile(usr user.User) (user.User, error) {
 		return user.User{}, err
 	}
 
+	redisKey := "User-Prof:" + usr.Username
+	err = re.redis.Del(ctx, redisKey)
+	if err != nil {
+		return user.User{}, err
+	}
 	return usr, nil
 }
 
@@ -209,6 +237,12 @@ func (re *UserService) UploadPicture(ctx context.Context, file multipart.File, h
 		ProfilePicture: &fileName,
 	})
 
+	if err != nil {
+		return user.User{}, err
+	}
+
+	redisKey := "User-Prof:" + usr.Username
+	err = re.redis.Del(ctx, redisKey)
 	if err != nil {
 		return user.User{}, err
 	}

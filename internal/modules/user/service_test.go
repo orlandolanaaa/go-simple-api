@@ -8,16 +8,17 @@ import (
 	"be_entry_task/internal/redis"
 	mocks2 "be_entry_task/mocks"
 	"database/sql"
+	"encoding/json"
+	"fmt"
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/go-redis/redismock/v8"
 	"github.com/golang/mock/gomock"
 	"log"
-	"reflect"
 	"testing"
 	"time"
 )
 
 var dtSrv = time.Now()
-
 var nicknameUsrSrv = "test"
 var profilePicUsrSrv = "test.png"
 var passPicUsrSrv = "password123"
@@ -51,7 +52,7 @@ func TestUserService_GetProfile(t *testing.T) {
 		want    user.User
 		wantErr bool
 	}{
-		{name: "Success-Get", want: user.User{
+		{name: "Error-Get", want: user.User{
 			ID:             idUsr,
 			Username:       usernameUsr,
 			Email:          emailUsr,
@@ -60,9 +61,12 @@ func TestUserService_GetProfile(t *testing.T) {
 			ProfilePicture: &profilePicUsr,
 			CreatedAt:      &dt,
 			UpdatedAt:      nil,
-		}},
+		}, wantErr: true},
 	}
-
+	db, _, err := sqlmock.New()
+	if err != nil {
+		log.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	mockUserRepo := mocks2.NewMockUserRepository(mockCtrl)
@@ -79,20 +83,19 @@ func TestUserService_GetProfile(t *testing.T) {
 		UpdatedAt:      nil,
 	}}, nil)
 
-	db, _, err := sqlmock.New()
-	if err != nil {
-		log.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
+	dbRed, mockRed := redismock.NewClientMock()
+	red := redis.NewRedis(dbRed)
+
+	key := fmt.Sprintf("User-Prof:%s", usernameUsr)
+	b, _ := json.Marshal(&usrDummySrv)
+	mockRed.ExpectSet(key, b, 5*time.Minute).SetErr(nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewUserService(db, mockUserRepo, mockAuthRepo, tt.fields.dbRedis).GetProfile(usrDummy)
+			_, err := NewUserService(db, mockUserRepo, mockAuthRepo, red).GetProfile(usrDummy)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetProfile() error = %v, wantErr %v", err, tt.wantErr)
 				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetProfile() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -245,6 +248,13 @@ func TestUserService_UpdateProfile(t *testing.T) {
 	mockUserRepo.EXPECT().Find(int64(idUsr)).Return(usrDummySrv, nil)
 	mockUserRepo.EXPECT().Update(gomock.Any()).Return(nil)
 
+	dbRed, mockRed := redismock.NewClientMock()
+
+	key := fmt.Sprintf("User-Prof:%s", usernameUsr)
+	mockRed.ExpectDel(key).SetErr(nil)
+
+	red := redis.NewRedis(dbRed)
+
 	tests := []struct {
 		name    string
 		fields  fields
@@ -264,11 +274,11 @@ func TestUserService_UpdateProfile(t *testing.T) {
 			ProfilePicture: &profilePicUsr,
 			CreatedAt:      &dt,
 			UpdatedAt:      nil,
-		}}},
+		}}, wantErr: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := NewUserService(db, mockUserRepo, mockAuthRepo, tt.fields.dbRedis).UpdateProfile(tt.args.usr)
+			_, err := NewUserService(db, mockUserRepo, mockAuthRepo, red).UpdateProfile(tt.args.usr)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UpdateProfile() error = %v, wantErr %v", err, tt.wantErr)
 				return

@@ -26,10 +26,14 @@ func NewUserRepository(mysql *sql.DB) UserRepository {
 
 func (u *UserRepo) Create(user entities.User) error {
 
+	const timeLayout = "2006-01-02 15:04:05"
+	dt := time.Now()
+	createdAt := dt.Format(timeLayout)
+
 	hashPwd, _ := bcrypt.GenerateFromPassword([]byte(user.Password), 14)
 	fmt.Println(string(hashPwd))
 
-	_, err := u.db.Exec("INSERT into users (username,password,email) values (?,?,?)", user.Username, string(hashPwd), user.Email)
+	_, err := u.db.Exec("INSERT into users (username,password,email,created_at) values (?,?,?,?)", user.Username, string(hashPwd), user.Email, createdAt)
 	if err != nil {
 		fmt.Println(err.Error())
 		return err
