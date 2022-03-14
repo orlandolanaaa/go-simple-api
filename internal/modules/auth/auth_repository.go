@@ -35,7 +35,6 @@ func (ar *AuthRepo) Create(user entities.UserToken) (int64, error) {
 		return 0, err
 	}
 
-	fmt.Println("insert success!")
 	return id, nil
 }
 

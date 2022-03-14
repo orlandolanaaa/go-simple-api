@@ -87,6 +87,20 @@ func TestAuthRepo_SearchWithToken(t *testing.T) {
 	//generatedAt := dt.Format(timeLayout)
 	expireTime := time.Now().Add(time.Minute * 60)
 
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+	db2 := db
+	defer db2.Close()
+
+	query := regexp.QuoteMeta("select * from user_tokens where token = ?")
+
+	rows := sqlmock.NewRows([]string{"id", "user_id", "token", "expired_at", "created_at", "updated_at", "deleted_at"}).
+		AddRow(111, 1, authToken, &dt, &expireTime, nil, nil)
+
+	mock.ExpectQuery(query).WithArgs(authToken).WillReturnRows(rows)
 	tests := []struct {
 		name    string
 		fields  fields
@@ -101,26 +115,13 @@ func TestAuthRepo_SearchWithToken(t *testing.T) {
 			CreatedAt: &dt,
 			UpdatedAt: nil,
 			DeletedAt: nil,
-		}}, want: authToken, wantErr: false},
+		}}, fields: fields{db: db}, want: authToken, wantErr: false},
+		{name: "Err-Search", args: args{user: entities.UserToken{}}, fields: fields{db: db2}, want: "", wantErr: true},
 	}
-
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
-
-	query := regexp.QuoteMeta("select * from user_tokens where token = ?")
-
-	rows := sqlmock.NewRows([]string{"id", "user_id", "token", "expired_at", "created_at", "updated_at", "deleted_at"}).
-		AddRow(111, 1, authToken, &dt, &expireTime, nil, nil)
-
-	mock.ExpectQuery(query).WithArgs(authToken).WillReturnRows(rows)
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ar := &AuthRepo{
-				db: db,
+				db: tt.fields.db,
 			}
 			got, err := ar.SearchWithToken(authToken)
 			if (err != nil) != tt.wantErr {

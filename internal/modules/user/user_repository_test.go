@@ -78,6 +78,13 @@ func TestUserRepo_Find(t *testing.T) {
 			want:    usrDummy,
 			wantErr: false,
 		},
+		{
+			name:    "Find-Success",
+			fields:  fields{},
+			args:    args{id: 0},
+			want:    usrDummy,
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -120,7 +127,7 @@ func TestUserRepo_SearchWithUsernameOrEmail(t *testing.T) {
 
 	mock.ExpectQuery(query).WithArgs("test", "test@mail.com").WillReturnRows(rows)
 	var wantMock []entities.User
-	wantMock = append(wantMock, usrDummy)
+	//wantMock = append(wantMock, usrDummy)
 	tests := []struct {
 		name    string
 		fields  fields
@@ -130,7 +137,7 @@ func TestUserRepo_SearchWithUsernameOrEmail(t *testing.T) {
 	}{
 		{
 			name:   "SearchWithUsernameOrEmail-Success",
-			fields: fields{},
+			fields: fields{db: db},
 			args: args{user: entities.User{
 				ID:             idUsr,
 				Username:       usernameUsr,
@@ -145,11 +152,18 @@ func TestUserRepo_SearchWithUsernameOrEmail(t *testing.T) {
 			want:    wantMock,
 			wantErr: false,
 		},
+		{
+			name:    "SearchWithUsernameOrEmail-Err",
+			fields:  fields{db: db},
+			args:    args{user: entities.User{}},
+			want:    wantMock,
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			u := &UserRepo{
-				db: db,
+				db: tt.fields.db,
 			}
 			got, err := u.SearchWithUsernameOrEmail(tt.args.user)
 			if (err != nil) != tt.wantErr {
@@ -266,6 +280,12 @@ func TestUserRepo_Create(t *testing.T) {
 			fields:  fields{},
 			args:    args{user: usrDummy},
 			wantErr: false,
+		},
+		{
+			name:    "Create-Err",
+			fields:  fields{},
+			args:    args{user: entities.User{}},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {

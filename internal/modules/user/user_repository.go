@@ -39,7 +39,6 @@ func (u *UserRepo) Create(user entities.User) error {
 		return err
 	}
 
-	fmt.Println("insert success!")
 	return nil
 }
 
@@ -68,7 +67,6 @@ func (u *UserRepo) Update(user entities.User) error {
 		return err
 	}
 
-	fmt.Println("update success!")
 	return nil
 }
 

@@ -126,6 +126,8 @@ func TestUserService_Login(t *testing.T) {
 		UpdatedAt:      nil,
 	}}, nil)
 
+	mockUserRepo.EXPECT().SearchWithUsernameOrEmail(entities.User{Username: usernameUsr}).Return([]entities.User{}, nil)
+
 	//expireTime := time.Now().Add(time.Minute * 60)
 	mockAuthRepo.EXPECT().Create(gomock.Any()).Return(int64(1), nil)
 
@@ -153,6 +155,18 @@ func TestUserService_Login(t *testing.T) {
 			Username: usernameUsr,
 			Password: passPicUsrSrv,
 		}}},
+		{name: "Err-Login", want: entities.UserToken{
+			ID:        1,
+			UserID:    idUsr,
+			Token:     "",
+			ExpiredAt: &dt,
+			CreatedAt: &dt,
+			UpdatedAt: nil,
+			DeletedAt: nil,
+		}, args: args{usr: auth.LoginRequest{
+			Username: usernameUsr,
+			Password: passPicUsrSrv,
+		}}, wantErr: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
