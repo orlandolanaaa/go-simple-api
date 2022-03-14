@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"be_entry_task/internal/modules/entities"
 	"database/sql"
 	"fmt"
 )
@@ -15,12 +16,12 @@ func NewAuthRepo(mysql *sql.DB) *AuthRepo {
 	}
 }
 
-type UserRepository interface {
-	Create(UserToken) (int64, error)
-	SearchWithToken(token string) (UserToken, error)
+type AuthRepository interface {
+	Create(entities.UserToken) (int64, error)
+	SearchWithToken(token string) (entities.UserToken, error)
 }
 
-func (ar *AuthRepo) Create(user UserToken) (int64, error) {
+func (ar *AuthRepo) Create(user entities.UserToken) (int64, error) {
 
 	res, err := ar.db.Exec("insert into user_tokens (user_id,token,expired_at) values (?,?,?)", user.UserID, user.Token, user.ExpiredAt)
 	if err != nil {
@@ -38,17 +39,17 @@ func (ar *AuthRepo) Create(user UserToken) (int64, error) {
 	return id, nil
 }
 
-func (ar *AuthRepo) SearchWithToken(token string) (UserToken, error) {
+func (ar *AuthRepo) SearchWithToken(token string) (entities.UserToken, error) {
 
 	rows := ar.db.QueryRow("select * from user_tokens where token = ?", token)
 
-	var result UserToken
+	var result entities.UserToken
 
 	err := rows.Scan(&result.ID, &result.UserID, &result.Token, &result.ExpiredAt, &result.CreatedAt, &result.UpdatedAt, &result.DeletedAt)
 
 	if err = rows.Err(); err != nil {
 		fmt.Println(err.Error())
-		return UserToken{}, err
+		return entities.UserToken{}, err
 	}
 
 	return result, nil

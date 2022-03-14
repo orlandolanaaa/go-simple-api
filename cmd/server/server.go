@@ -4,12 +4,13 @@ import (
 	middleware "be_entry_task/internal/http/handler"
 	"be_entry_task/internal/http/handler/domain/auth/handler"
 	user "be_entry_task/internal/http/handler/domain/user/handler"
-	"be_entry_task/internal/redis"
+	redis2 "be_entry_task/internal/redis"
 	"cloud.google.com/go/firestore"
 	cloud "cloud.google.com/go/storage"
 	"context"
 	"database/sql"
 	errors "errors"
+	redisDB "github.com/go-redis/redis/v8"
 	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
@@ -21,14 +22,14 @@ type Server struct {
 	Storage         *cloud.Client
 	FireStoreClient *firestore.Client
 	db              *sql.DB
-	redis           redis.RedisDB
+	redis           redis2.RedisDB
 }
 
-func Get(mysql *sql.DB) *Server {
+func Get(mysql *sql.DB, redis *redisDB.Client) *Server {
 	return &Server{
 		srv:   &http.Server{},
 		db:    mysql,
-		redis: redis.NewRedis(),
+		redis: redis2.NewRedis(redis),
 	}
 }
 
@@ -46,13 +47,13 @@ func (s *Server) WithRouter() *Server {
 	router := httprouter.New()
 
 	//AUTH
-	router.POST("/register", handler.NewRegister(s.db).Handle)
-	router.POST("/login", handler.NewLogin(s.db).Handle)
+	router.POST("/register", handler.NewRegister(s.db, s.redis).Handle)
+	router.POST("/login", handler.NewLogin(s.db, s.redis).Handle)
 
 	//FEATURE
-	router.PUT("/users/profile", middleware.Auth(user.NewUpdateUser(s.db).Handle, s.db, s.redis))
-	router.PUT("/users/profile-picture", middleware.Auth(user.NewUpdatePicture(s.db).Handle, s.db, s.redis))
-	router.GET("/users/profile", middleware.Auth(user.NewGetProfile(s.db).Handle, s.db, s.redis))
+	router.PUT("/users/profile", middleware.Auth(user.NewUpdateUser(s.db, s.redis).Handle, s.db, s.redis))
+	router.PUT("/users/profile-picture", middleware.Auth(user.NewUpdatePicture(s.db, s.redis).Handle, s.db, s.redis))
+	router.GET("/users/profile", middleware.Auth(user.NewGetProfile(s.db, s.redis).Handle, s.db, s.redis))
 
 	s.srv.Handler = router
 	return s

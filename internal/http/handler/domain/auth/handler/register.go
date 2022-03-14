@@ -3,7 +3,9 @@ package handler
 import (
 	"be_entry_task/internal/http/handler/domain/auth"
 	"be_entry_task/internal/http/response"
+	auth2 "be_entry_task/internal/modules/auth"
 	"be_entry_task/internal/modules/user"
+	"be_entry_task/internal/redis"
 	"database/sql"
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
@@ -15,11 +17,13 @@ import (
 type Register struct {
 	UserSrv user.UserService
 	db      *sql.DB
+	dbRedis redis.RedisDB
 }
 
-func NewRegister(mysql *sql.DB) *Register {
+func NewRegister(mysql *sql.DB, redis redis.RedisDB) *Register {
 	return &Register{
-		db: mysql,
+		db:      mysql,
+		dbRedis: redis,
 	}
 }
 func (re *Register) Handle(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -42,7 +46,7 @@ func (re *Register) Handle(w http.ResponseWriter, r *http.Request, ps httprouter
 		return
 	}
 
-	err = user.NewUserService(re.db).RegisterUser(req)
+	err = user.NewUserService(re.db, user.NewUserRepository(re.db), auth2.NewAuthRepo(re.db), re.dbRedis).RegisterUser(req)
 	if err != nil {
 		response.Err(w, err)
 		return

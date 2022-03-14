@@ -3,7 +3,10 @@ package handler
 import (
 	usrDom "be_entry_task/internal/http/handler/domain/user"
 	"be_entry_task/internal/http/response"
+	auth2 "be_entry_task/internal/modules/auth"
+	"be_entry_task/internal/modules/entities"
 	usrMod "be_entry_task/internal/modules/user"
+	"be_entry_task/internal/redis"
 	"database/sql"
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
@@ -15,10 +18,14 @@ import (
 type GetProfile struct {
 	UserSrv usrMod.UserService
 	db      *sql.DB
+	dbRedis redis.RedisDB
 }
 
-func NewGetProfile(mysql *sql.DB) *GetProfile {
-	return &GetProfile{db: mysql}
+func NewGetProfile(mysql *sql.DB, redis redis.RedisDB) *GetProfile {
+	return &GetProfile{
+		db:      mysql,
+		dbRedis: redis,
+	}
 }
 
 func (gp *GetProfile) Handle(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -32,7 +39,7 @@ func (gp *GetProfile) Handle(w http.ResponseWriter, r *http.Request, ps httprout
 		return
 	}
 
-	res, err := usrMod.NewUserService(gp.db).GetProfile(usrMod.User{Username: authMeta.Username, Email: authMeta.Email})
+	res, err := usrMod.NewUserService(gp.db, usrMod.NewUserRepository(gp.db), auth2.NewAuthRepo(gp.db), gp.dbRedis).GetProfile(entities.User{Username: authMeta.Username, Email: authMeta.Email})
 	if err != nil {
 		response.Err(w, err)
 		return

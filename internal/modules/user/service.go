@@ -5,6 +5,7 @@ import (
 	"be_entry_task/internal/http/handler/domain/auth"
 	"be_entry_task/internal/http/handler/domain/user"
 	auth2 "be_entry_task/internal/modules/auth"
+	"be_entry_task/internal/modules/entities"
 	"be_entry_task/internal/redis"
 	"context"
 	"crypto/rand"
@@ -24,19 +25,23 @@ import (
 type UserService struct {
 	redis redis.RedisDB
 	db    *sql.DB
+	uRepo UserRepository
+	aRepo auth2.AuthRepository
 }
 
-func NewUserService(mysql *sql.DB) *UserService {
+func NewUserService(mysql *sql.DB, userRepo UserRepository, authRepo auth2.AuthRepository, dbRedis redis.RedisDB) *UserService {
 	return &UserService{
-		redis: redis.NewRedis(),
+		redis: dbRedis,
 		db:    mysql,
+		uRepo: userRepo,
+		aRepo: authRepo,
 	}
 }
 
 //RegisterUser is business logic to register user
 func (re *UserService) RegisterUser(req auth.RegisterUserRequest) error {
 	//check if username or email exists
-	userEx, err := NewUserRepository(re.db).SearchWithUsernameOrEmail(User{
+	userEx, err := re.uRepo.SearchWithUsernameOrEmail(entities.User{
 		Username: req.Username,
 		Email:    req.Email,
 		Password: req.Password,
@@ -50,7 +55,7 @@ func (re *UserService) RegisterUser(req auth.RegisterUserRequest) error {
 		return errors.New("user exists")
 	}
 
-	err = NewUserRepository(re.db).Create(User{
+	err = re.uRepo.Create(entities.User{
 		Username: req.Username,
 		Email:    req.Email,
 		Password: req.Password,
@@ -63,22 +68,22 @@ func (re *UserService) RegisterUser(req auth.RegisterUserRequest) error {
 	return nil
 }
 
-func (re *UserService) Login(usr auth.LoginRequest) (auth2.UserToken, error) {
+func (re *UserService) Login(usr auth.LoginRequest) (entities.UserToken, error) {
 
 	//check if username or email exists
-	userEx, err := NewUserRepository(re.db).SearchWithUsernameOrEmail(User{Username: usr.Username})
+	userEx, err := re.uRepo.SearchWithUsernameOrEmail(entities.User{Username: usr.Username})
 	if err != nil {
-		return auth2.UserToken{}, err
+		return entities.UserToken{}, err
 	}
 
 	if len(userEx) == 0 {
-		return auth2.UserToken{}, err
+		return entities.UserToken{}, err
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(userEx[0].Password), []byte(usr.Password))
 
 	if err != nil {
-		return auth2.UserToken{}, err
+		return entities.UserToken{}, err
 	}
 
 	randomToken := make([]byte, 32)
@@ -86,7 +91,7 @@ func (re *UserService) Login(usr auth.LoginRequest) (auth2.UserToken, error) {
 	_, err = rand.Read(randomToken)
 
 	if err != nil {
-		return auth2.UserToken{}, err
+		return entities.UserToken{}, err
 	}
 
 	authToken := base64.URLEncoding.EncodeToString(randomToken)
@@ -98,16 +103,16 @@ func (re *UserService) Login(usr auth.LoginRequest) (auth2.UserToken, error) {
 	expireTime := time.Now().Add(time.Minute * 60)
 	//expiresAt := expireTime.Format(timeLayout)
 
-	var userTokenEn auth2.UserToken
+	var userTokenEn entities.UserToken
 	userTokenEn.Token = authToken
 	userTokenEn.UserID = userEx[0].ID
 	userTokenEn.ExpiredAt = &expireTime
 	userTokenEn.CreatedAt = &dt
 
-	id, err := auth2.NewAuthRepo(re.db).Create(userTokenEn)
+	id, err := re.aRepo.Create(userTokenEn)
 
 	if err != nil {
-		return auth2.UserToken{}, err
+		return entities.UserToken{}, err
 	}
 
 	userTokenEn.ID = id
@@ -116,9 +121,9 @@ func (re *UserService) Login(usr auth.LoginRequest) (auth2.UserToken, error) {
 }
 
 //GetProfile is business logic to get profile user
-func (re *UserService) GetProfile(usr User) (user.User, error) {
+func (re *UserService) GetProfile(usr entities.User) (user.User, error) {
 	//check if username or email exists
-	userEx, err := NewUserRepository(re.db).SearchWithUsernameOrEmail(usr)
+	userEx, err := re.uRepo.SearchWithUsernameOrEmail(usr)
 	if err != nil {
 		return user.User{}, err
 	}
@@ -142,7 +147,7 @@ func (re *UserService) GetProfile(usr User) (user.User, error) {
 //UpdateProfile is business logic to upload profile user
 func (re *UserService) UpdateProfile(usr user.User) (user.User, error) {
 	//check if username or email exists
-	userEx, err := NewUserRepository(re.db).Find(usr.ID)
+	userEx, err := re.uRepo.Find(usr.ID)
 	if err != nil {
 		return user.User{}, err
 	}
@@ -151,7 +156,7 @@ func (re *UserService) UpdateProfile(usr user.User) (user.User, error) {
 		return user.User{}, err
 	}
 
-	err = NewUserRepository(re.db).Update(User{
+	err = re.uRepo.Update(entities.User{
 		ID:             usr.ID,
 		Nickname:       usr.Nickname,
 		ProfilePicture: usr.ProfilePicture,
@@ -167,7 +172,7 @@ func (re *UserService) UpdateProfile(usr user.User) (user.User, error) {
 //UploadPicture is business logic to upload picture user
 func (re *UserService) UploadPicture(ctx context.Context, file multipart.File, handler *multipart.FileHeader, usr user.User) (user.User, error) {
 	//check if username or email exists
-	userEx, err := NewUserRepository(re.db).Find(usr.ID)
+	userEx, err := re.uRepo.Find(usr.ID)
 
 	if err != nil {
 		return user.User{}, err
@@ -198,7 +203,7 @@ func (re *UserService) UploadPicture(ctx context.Context, file multipart.File, h
 
 	fmt.Printf("File size uploaded: %v\n", byteSize)
 
-	err = NewUserRepository(re.db).Update(User{
+	err = re.uRepo.Update(entities.User{
 		ID:             usr.ID,
 		Nickname:       usr.Nickname,
 		ProfilePicture: &fileName,

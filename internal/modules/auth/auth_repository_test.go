@@ -1,10 +1,12 @@
 package auth
 
 import (
+	"be_entry_task/internal/modules/entities"
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
 	"github.com/DATA-DOG/go-sqlmock"
+	"reflect"
 	"regexp"
 	"testing"
 	"time"
@@ -12,7 +14,7 @@ import (
 
 func TestAuthRepo_Create(t *testing.T) {
 	type args struct {
-		user UserToken
+		user entities.UserToken
 	}
 
 	randomToken := make([]byte, 32)
@@ -43,7 +45,7 @@ func TestAuthRepo_Create(t *testing.T) {
 		want    int64
 		wantErr bool
 	}{
-		{name: "Success", args: args{user: UserToken{
+		{name: "Success", args: args{user: entities.UserToken{
 			UserID:    1,
 			Token:     authToken,
 			ExpiredAt: &expireTime,
@@ -73,7 +75,7 @@ func TestAuthRepo_SearchWithToken(t *testing.T) {
 		db *sql.DB
 	}
 	type args struct {
-		user UserToken
+		user entities.UserToken
 	}
 	randomToken := make([]byte, 32)
 
@@ -92,7 +94,7 @@ func TestAuthRepo_SearchWithToken(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		{name: "Success Search", args: args{user: UserToken{
+		{name: "Success Search", args: args{user: entities.UserToken{
 			UserID:    1,
 			Token:     authToken,
 			ExpiredAt: &expireTime,
@@ -127,6 +129,31 @@ func TestAuthRepo_SearchWithToken(t *testing.T) {
 			}
 			if got.Token != tt.want {
 				t.Errorf("SearchWithToken() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNewAuthRepo(t *testing.T) {
+	type args struct {
+		mysql *sql.DB
+	}
+	db, _, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+	tests := []struct {
+		name string
+		args args
+		want *AuthRepo
+	}{
+		{name: "Init-Auth-Repo", args: args{mysql: db}, want: NewAuthRepo(db)},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NewAuthRepo(tt.args.mysql); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewAuthRepo() = %v, want %v", got, tt.want)
 			}
 		})
 	}

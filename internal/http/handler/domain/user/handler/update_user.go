@@ -3,6 +3,7 @@ package handler
 import (
 	"be_entry_task/internal/http/handler/domain/user"
 	"be_entry_task/internal/http/response"
+	auth2 "be_entry_task/internal/modules/auth"
 	usrMod "be_entry_task/internal/modules/user"
 	"be_entry_task/internal/redis"
 	"database/sql"
@@ -17,11 +18,12 @@ import (
 type UpdateUser struct {
 	UserSrv usrMod.UserService
 	db      *sql.DB
-	redis   redis.RedisDB
+	dbRedis redis.RedisDB
 }
 
-func NewUpdateUser(mysql *sql.DB) *UpdateUser {
-	return &UpdateUser{db: mysql}
+func NewUpdateUser(mysql *sql.DB, redis redis.RedisDB) *UpdateUser {
+	return &UpdateUser{db: mysql,
+		dbRedis: redis}
 }
 
 func (up *UpdateUser) Handle(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -56,7 +58,7 @@ func (up *UpdateUser) Handle(w http.ResponseWriter, r *http.Request, ps httprout
 		return
 	}
 
-	res, err := usrMod.NewUserService(up.db).UpdateProfile(user.User{
+	res, err := usrMod.NewUserService(up.db, usrMod.NewUserRepository(up.db), auth2.NewAuthRepo(up.db), up.dbRedis).UpdateProfile(user.User{
 		ID:             userMeta.ID,
 		Username:       userMeta.Username,
 		Email:          userMeta.Email,

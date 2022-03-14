@@ -2,24 +2,27 @@ package redis
 
 import (
 	"context"
+	"github.com/go-redis/redis/v8"
+
 	"time"
 )
 
 type RedisDB struct {
+	db *redis.Client
 }
 
-func NewRedis() RedisDB {
-	return RedisDB{}
+func NewRedis(redis *redis.Client) RedisDB {
+	return RedisDB{db: redis}
 }
 
 func (r *RedisDB) GetBytes(ctx context.Context, key string) ([]byte, error) {
-	return Client.Get(ctx, key).Bytes()
+	return r.db.Get(ctx, key).Bytes()
 }
 
 func (r *RedisDB) Set(ctx context.Context, key string, value interface{}, duration time.Duration) error {
-	return Client.Set(ctx, key, value, duration).Err()
+	return r.db.Set(ctx, key, value, duration).Err()
 }
 
 func (r *RedisDB) Del(ctx context.Context, key string) error {
-	return Client.Del(ctx, key).Err()
+	return r.db.Del(ctx, key).Err()
 }
