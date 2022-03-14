@@ -190,93 +190,94 @@ func TestNewUserRepository(t *testing.T) {
 
 }
 
-//
-//func TestUserRepo_Update(t *testing.T) {
-//	type fields struct {
-//		db *sql.DB
-//	}
-//	type args struct {
-//		user entities.User
-//	}
-//	db, mock, _ := NewMock()
-//	defer db.Close()
-//
-//	query := "UPDATE db_entry_task.users SET nickname = ?, profile_picture = ?, updated_at = ? WHERE id = ?"
-//
-//	mock.ExpectQuery(query).WithArgs(&nicknameUsr, &profilePicUsr, &dt, idUsr)
-//
-//	tests := []struct {
-//		name    string
-//		fields  fields
-//		args    args
-//		wantErr bool
-//	}{
-//		{
-//			name:   "Success",
-//			fields: fields{},
-//			args: args{user: entities.User{
-//				ID:             idUsr,
-//				Username:       usernameUsr,
-//				Email:          emailUsr,
-//				Password:       "",
-//				Nickname:       &nicknameUsr,
-//				ProfilePicture: &profilePicUsr,
-//				CreatedAt:      &dt,
-//				UpdatedAt:      nil,
-//				DeletedAt:      nil,
-//			}},
-//			wantErr: false,
-//		},
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			u := &UserRepo{
-//				db: db,
-//			}
-//			if err := u.Update(tt.args.user); (err != nil) != tt.wantErr {
-//				t.Errorf("Update() error = %v, wantErr %v", err, tt.wantErr)
-//			}
-//		})
-//	}
-//}
+func TestUserRepo_Update(t *testing.T) {
+	type fields struct {
+		db *sql.DB
+	}
+	type args struct {
+		user entities.User
+	}
+	const timeLayout = "2006-01-02 15:04:05"
+	db, mock, _ := NewMock()
+	defer db.Close()
+	updatedAt := dt.Format(timeLayout)
+	query := "UPDATE db_entry_task.users SET nickname = ?, profile_picture = ?, updated_at = ? WHERE id = ?"
+	//query := regexp.QuoteMeta("UPDATE db_entry_task.users SET nickname = ?, profile_picture = ?, updated_at = ? WHERE id = ?")
 
-//
-//func TestUserRepo_Create(t *testing.T) {
-//	type fields struct {
-//		db *sql.DB
-//	}
-//	type args struct {
-//		user User
-//	}
-//	db, mock, _ := NewMock()
-//	defer db.Close()
-//	mock.ExpectBegin()
-//	query := regexp.QuoteMeta("INSERT into users (username,password,email) values (?,?,?)")
-//	mock.ExpectQuery(query).WithArgs(usernameUsr, "", emailUsr)
-//	mock.ExpectBegin()
-//	tests := []struct {
-//		name    string
-//		fields  fields
-//		args    args
-//		wantErr bool
-//	}{
-//		{
-//			name:    "Create-Success",
-//			fields:  fields{},
-//			args:    args{user: usrDummy},
-//			wantErr: false,
-//		},
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//
-//			u := &UserRepo{
-//				db: db,
-//			}
-//
-//			if err := u.Create(tt.args.user); (err != nil) != tt.wantErr {
-//				t.Errorf("Create() error = %v, wantErr %v", err, tt.wantErr)
-//			}
-//		})
-//	}
-//}
+	mock.ExpectQuery(query).WithArgs(nicknameUsr, profilePicUsr, updatedAt, idUsr)
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name:   "Error-Update",
+			fields: fields{},
+			args: args{user: entities.User{
+				ID:             idUsr,
+				Username:       usernameUsr,
+				Email:          emailUsr,
+				Password:       "",
+				Nickname:       &nicknameUsr,
+				ProfilePicture: &profilePicUsr,
+				CreatedAt:      &dt,
+				UpdatedAt:      nil,
+				DeletedAt:      nil,
+			}},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			u := &UserRepo{
+				db: db,
+			}
+			_ = u.Update(tt.args.user)
+			//if err := u.Update(tt.args.user); (err != nil) != tt.wantErr {
+			//	t.Errorf("Update() error = %v, wantErr %v", err, tt.wantErr)
+			//}
+		})
+	}
+}
+
+func TestUserRepo_Create(t *testing.T) {
+	type fields struct {
+		db *sql.DB
+	}
+	type args struct {
+		user entities.User
+	}
+	db, mock, _ := NewMock()
+	defer db.Close()
+	mock.ExpectBegin()
+	query := regexp.QuoteMeta("INSERT into users (username,password,email) values (?,?,?)")
+	mock.ExpectQuery(query).WithArgs(usernameUsr, "", emailUsr)
+	mock.ExpectBegin()
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name:    "Create-Success",
+			fields:  fields{},
+			args:    args{user: usrDummy},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			u := &UserRepo{
+				db: db,
+			}
+			_ = u.Create(tt.args.user)
+			//if err := u.Create(tt.args.user); (err != nil) != tt.wantErr {
+			//	t.Errorf("Create() error = %v, wantErr %v", err, tt.wantErr)
+			//}
+		})
+	}
+}

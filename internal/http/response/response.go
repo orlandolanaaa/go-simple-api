@@ -21,12 +21,6 @@ func Json(w http.ResponseWriter, httpCode int, message string, data interface{})
 	json.NewEncoder(w).Encode(res)
 }
 
-func Text(w http.ResponseWriter, httpCode int, message string) {
-	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(httpCode)
-	w.Write([]byte(message))
-}
-
 // TODO: implement response error
 func Err(w http.ResponseWriter, err error) {
 	_, ok := err.(*error2.RespError)
