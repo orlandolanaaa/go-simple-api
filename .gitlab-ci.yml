@@ -1,0 +1,16 @@
+image: golang:1.15-alpine
+
+variables:
+  APP_NAME: go-simple-user-api
+  APP_TEAM: games
+  APP_REPO_PATH: git.garena.com/constantino.lana/go-simple-user-api
+
+
+test:
+  stage: test
+  tags:
+    - tutorial-ci
+  script:
+    - go test $(go list ./... | grep -v /vendor/) -v -coverprofile .testCoverage.txt
+    - go test ./... -coverprofile cover.out
+    - go tool cover -func cover.out
